@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digiday – Generátor protokolu o profylaxi</title>
+<style>
+  :root {
+    --pink: #e0007a;
+    --dark: #313746;
+    --bg: #f4f4f7;
+    --border: #e5e7eb;
+    --muted: #6b7280;
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --issue: #ef4444;
+    --na: #9ca3af;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--dark);
+    background: var(--bg);
+  }
+
+  /* ===== Top bar (screen only) ===== */
+  .topbar {
+    background: #fff;
+    border-bottom: 3px solid var(--pink);
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar img { height: 36px; }
+  .topbar h1 {
+    margin: 0;
+    font-size: 14pt;
+    font-weight: 700;
+    color: var(--dark);
+  }
+  .topbar h1 span { color: var(--pink); }
+  .topbar .actions { display: flex; gap: 8px; align-items: center; }
+  .topbar .gear {
+    background: none; border: 0; cursor: pointer; font-size: 18pt;
+    color: var(--muted); padding: 0 6px;
+  }
+  .topbar .gear:hover { color: var(--pink); }
+  .btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--dark);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 10pt;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn:hover { background: #f7f7f9; }
+  .btn.primary {
+    background: var(--pink);
+    color: #fff;
+    border-color: var(--pink);
+  }
+  .btn.primary:hover { background: #b80064; border-color: #b80064; }
+
+  /* ===== Layout ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 18px;
+    padding: 18px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ===== Form panel ===== */
+  .form-panel {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 18px;
+    height: fit-content;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+  .form-panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 11pt;
+    color: var(--dark);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  .form-panel h2.subsection {
+    margin-top: 18px;
+    color: var(--pink);
+    font-size: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .form-panel label {
+    display: block;
+    font-size: 9pt;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .form-panel input[type=text],
+  .form-panel input[type=date],
+  .form-panel select,
+  .form-panel textarea {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 10pt;
+    color: var(--dark);
+    font-family: inherit;
+    background: #fff;
+  }
+  .form-panel input:focus,
+  .form-panel select:focus,
+  .form-panel textarea:focus {
+    outline: none;
+    border-color: var(--pink);
+    box-shadow: 0 0 0 2px rgba(224,0,122,0.15);
+  }
+  .form-panel textarea { resize: vertical; min-height: 50px; }
+
+  .item-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .item-card .item-card-title {
+    font-weight: 600;
+    font-size: 10pt;
+    margin-bottom: 8px;
+    color: var(--dark);
+  }
+  .item-card .row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+    align-items: start;
+  }
+
+  /* Broken links rows */
+  .links-list { margin-top: 8px; }
+  .link-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 28px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .link-row input { font-size: 9pt; padding: 5px 7px; }
+  .link-row button {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .add-link {
+    background: #f7f7f9;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 6px;
+    width: 100%;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 9pt;
+  }
+  .add-link:hover { border-color: var(--pink); color: var(--pink); }
+
+  /* ===== Preview panel ===== */
+  .preview-panel {
+    background: #e8e8ee;
+    border-radius: 8px;
+    padding: 24px;
+    overflow: auto;
+  }
+  .page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 14mm;
+    margin: 0 auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    color: var(--dark);
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  /* ===== Protocol design (matches PDF) ===== */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid var(--pink);
+    padding-bottom: 10px; margin-bottom: 18px;
+  }
+  .header img { height: 48px; }
+  .header .doc-title { text-align: right; }
+  .header .doc-title h1 { margin: 0; font-size: 18pt; font-weight: 700; letter-spacing: -0.3px; }
+  .header .doc-title .subtitle {
+    color: var(--pink); font-size: 10pt; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px;
+  }
+
+  .meta {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: #f7f7f9; border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 14px; margin-bottom: 22px;
+  }
+  .meta .field { padding: 2px 12px; border-left: 1px solid var(--border); }
+  .meta .field:first-child { border-left: 0; padding-left: 0; }
+  .meta .meta-label {
+    font-size: 8pt; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.8px; font-weight: 600; margin-bottom: 2px;
+  }
+  .meta .meta-value { font-size: 11pt; font-weight: 600; }
+
+  h2.section {
+    color: var(--dark); font-size: 12pt; margin: 0 0 10px 0;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  h2.section .accent { color: var(--pink); }
+
+  .item {
+    border: 1px solid var(--border); border-left: 4px solid var(--pink);
+    border-radius: 4px; padding: 10px 14px; margin-bottom: 9px;
+    page-break-inside: avoid;
+  }
+  .item.ok    { border-left-color: var(--ok); }
+  .item.warn  { border-left-color: var(--warn); }
+  .item.issue { border-left-color: var(--issue); }
+  .item.na    { border-left-color: var(--na); }
+
+  .item-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; margin-bottom: 4px;
+  }
+  .item-title { font-weight: 700; font-size: 11pt; }
+  .badge {
+    display: inline-block; font-size: 8.5pt; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge.ok    { background: #d1fae5; color: #065f46; }
+  .badge.warn  { background: #fef3c7; color: #92400e; }
+  .badge.issue { background: #fee2e2; color: #991b1b; }
+  .badge.na    { background: #f3f4f6; color: #4b5563; }
+
+  .item .desc { color: #4b5563; font-size: 10pt; margin: 0 0 6px 0; }
+  .item .note {
+    margin-top: 6px; padding: 8px 10px;
+    background: #fafafa; border-radius: 4px;
+    font-size: 10pt; white-space: pre-wrap;
+  }
+  .item .note strong { color: var(--pink); }
+  .item .note:empty { display: none; }
+
+  table.subtable {
+    width: 100%; border-collapse: collapse;
+    margin-top: 6px; font-size: 9.5pt;
+  }
+  table.subtable th, table.subtable td {
+    border: 1px solid var(--border); padding: 5px 8px;
+    text-align: left; vertical-align: top;
+  }
+  table.subtable th {
+    background: #f7f7f9; font-weight: 600; font-size: 9pt;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  table.subtable td a { color: var(--pink); text-decoration: none; word-break: break-all; }
+
+  .summary {
+    margin-top: 18px; padding: 12px 14px;
+    background: linear-gradient(90deg, rgba(224,0,122,0.06), rgba(224,0,122,0));
+    border: 1px solid var(--border); border-left: 4px solid var(--dark);
+    border-radius: 4px;
+  }
+  .summary h3 { margin: 0 0 6px 0; font-size: 11pt; }
+  .summary p { margin: 0; color: #4b5563; white-space: pre-wrap; }
+  .summary p:empty { display: none; }
+
+  .signatures {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 30px; margin-top: 28px;
+  }
+  .sig {
+    border-top: 1px solid var(--dark);
+    padding-top: 6px; font-size: 9.5pt; color: var(--muted);
+  }
+  .sig strong { color: var(--dark); }
+
+  .footer {
+    margin-top: 24px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 8.5pt; color: var(--muted);
+    display: flex; justify-content: space-between;
+  }
+  .footer a { color: var(--pink); text-decoration: none; }
+
+  /* ===== AI box ===== */
+  .ai-box {
+    background: linear-gradient(135deg, #fff5fa 0%, #ffffff 100%);
+    border: 1px solid #fbcfe8;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .ai-box .ai-title {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .ai-box .ai-title strong {
+    font-size: 10pt; color: var(--pink);
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .ai-box textarea {
+    width: 100%; min-height: 90px; resize: vertical;
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 8px; font-family: inherit; font-size: 10pt;
+    background: #fff;
+  }
+  .ai-box .ai-actions {
+    display: flex; gap: 8px; margin-top: 8px; align-items: center;
+  }
+  .ai-box .ai-status {
+    font-size: 9pt; color: var(--muted); flex: 1;
+  }
+  .ai-box .ai-status.error { color: var(--issue); font-weight: 600; }
+  .ai-box .ai-status.ok    { color: var(--ok); font-weight: 600; }
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid var(--border);
+    border-top-color: var(--pink); border-radius: 50%;
+    display: inline-block; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Modal ===== */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(49,55,70,0.5);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 8px; padding: 22px;
+    max-width: 460px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal h3 { margin: 0 0 12px 0; color: var(--dark); }
+  .modal p { font-size: 10pt; color: var(--muted); margin: 0 0 12px 0; line-height: 1.5; }
+  .modal p a { color: var(--pink); }
+  .modal input[type=password] {
+    width: 100%; padding: 9px 11px;
+    border: 1px solid var(--border); border-radius: 5px;
+    font-family: monospace; font-size: 10pt;
+  }
+  .modal .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px;
+  }
+
+  /* ===== Print ===== */
+  @page { size: A4; margin: 14mm 14mm 18mm 14mm; }
+  @media print {
+    body { background: #fff; }
+    .topbar, .form-panel, .preview-panel { all: revert; }
+    .topbar, .form-panel { display: none !important; }
+    .layout { display: block; padding: 0; max-width: none; }
+    .preview-panel { background: none; padding: 0; }
+    .page { box-shadow: none; width: auto; min-height: auto; padding: 0; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <img src="digiday_logo.svg" alt="Digiday">
+    <h1>Generátor protokolu <span>·</span> profylaxe webu</h1>
+  </div>
+  <div class="actions">
+    <button class="gear" id="btnSettings" title="Nastavení API klíče">⚙</button>
+    <button class="btn" id="btnReset">Vyčistit</button>
+    <button class="btn" id="btnSave">Uložit</button>
+    <button class="btn primary" id="btnPrint">Stáhnout PDF</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ============ FORM ============ -->
+  <aside class="form-panel">
+
+    <div class="ai-box">
+      <div class="ai-title">
+        <strong>✨ AI zpracování mailu</strong>
+      </div>
+      <textarea id="ai_input" placeholder="Vložte text mailu od programátora (klient, datum, co bylo provedeno…). AI vyplní formulář automaticky."></textarea>
+      <div class="ai-actions">
+        <button class="btn primary" id="btnAi">Zpracovat AI</button>
+        <span class="ai-status" id="ai_status"></span>
+      </div>
+    </div>
+
+    <h2>Základní údaje</h2>
+    <div class="field-grid">
+      <div>
+        <label>Klient</label>
+        <input type="text" id="f_client" placeholder="Název firmy">
+      </div>
+      <div>
+        <label>Web</label>
+        <input type="text" id="f_web" placeholder="www.priklad.cz">
+      </div>
+      <div>
+        <label>Datum</label>
+        <input type="date" id="f_date">
+      </div>
+      <div>
+        <label>Technik</label>
+        <input type="text" id="f_tech" placeholder="Jméno">
+      </div>
+    </div>
+
+    <h2 class="subsection">Provedené úkony</h2>
+    <div id="items"></div>
+
+    <h2 class="subsection">Souhrn</h2>
+    <textarea id="f_summary" rows="3" placeholder="Souhrn / doporučení pro klienta…"></textarea>
+  </aside>
+
+  <!-- ============ PREVIEW ============ -->
+  <main class="preview-panel">
+    <div class="page" id="page">
+      <header class="header">
+        <img src="digiday_logo.svg" alt="Digiday">
+        <div class="doc-title">
+          <h1>Protokol o profylaxi webu</h1>
+          <div class="subtitle">Pravidelná údržba a kontrola</div>
+        </div>
+      </header>
+
+      <section class="meta">
+        <div class="field"><div class="meta-label">Klient</div><div class="meta-value" id="p_client">—</div></div>
+        <div class="field"><div class="meta-label">Web</div><div class="meta-value" id="p_web">—</div></div>
+        <div class="field"><div class="meta-label">Datum</div><div class="meta-value" id="p_date">—</div></div>
+        <div class="field"><div class="meta-label">Technik</div><div class="meta-value" id="p_tech">—</div></div>
+      </section>
+
+      <h2 class="section">Provedené úkony <span class="accent">/</span> kontrolní body</h2>
+      <div id="p_items"></div>
+
+      <section class="summary">
+        <h3>Souhrn / doporučení</h3>
+        <p id="p_summary"></p>
+      </section>
+
+      <div class="signatures">
+        <div class="sig"><strong>Vypracoval</strong><br><span id="p_tech2">—</span></div>
+        <div class="sig"><strong>Datum</strong><br><span id="p_date2">—</span></div>
+      </div>
+
+      <footer class="footer">
+        <span>Digiday s.r.o. &nbsp;·&nbsp; <a href="https://digiday.cz">digiday.cz</a></span>
+        <span>Protokol o profylaxi webu</span>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<!-- API key modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Nastavení Anthropic API klíče</h3>
+    <p>
+      AI zpracování mailu používá Claude API. Klíč se ukládá <strong>pouze lokálně</strong> ve vašem prohlížeči (localStorage), nikam se neodesílá.
+    </p>
+    <p>
+      Klíč získáte na <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> (bezplatná registrace, kredit lze dobít kartou). Jedna analýza mailu stojí cca <strong>0,001 USD</strong>.
+    </p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-…">
+    <div class="modal-actions">
+      <button class="btn" id="btnModalCancel">Zrušit</button>
+      <button class="btn primary" id="btnModalSave">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  { id:'zaloha',    title:'1. Zálohování webu',
+    desc:'Pravidelné zálohování webového obsahu a databáze pro případ technických problémů, hackerského útoku nebo havárií.',
+    defaultStatus:'ok', defaultNote:'Zálohování provádí hosting automaticky.' },
+  { id:'wp',        title:'2. Aktualizace redakčního systému WordPress',
+    desc:'Aktualizace CMS WordPress (jádro, šablona) na aktuální verzi – velmi důležité pro chod a bezpečnost webu.',
+    defaultStatus:'ok', defaultNote:'' },
+  { id:'plugins',   title:'3. Aktualizace plug-inů a modulů',
+    desc:'Aktualizace plug-inů a modulů tak, aby korektně fungovaly v rámci celého CMS.',
+    defaultStatus:'ok', defaultNote:'' },
+  { id:'security',  title:'4. Ověření zabezpečení',
+    desc:'Kontrola a zajištění bezpečnosti webu, včetně SSL certifikátu a ochrany před hackerskými útoky.',
+    defaultStatus:'ok', defaultNote:'SSL certifikát platný, bezpečnostní nastavení v pořádku.' },
+  { id:'links',     title:'5. Kontrola odkazů',
+    desc:'Ověření, zda všechny odkazy na webu fungují správně a nevedou na chybové stránky.',
+    defaultStatus:'ok', defaultNote:'', hasLinks:true },
+  { id:'content',   title:'6. Správa obsahu',
+    desc:'Možnost menších aktualizací obsahu (novinky, akce, kontakty…).',
+    defaultStatus:'na', defaultNote:'Správa obsahu se provádí pouze na vyžádání klienta.' },
+  { id:'spam',      title:'7. Ochrana proti spamu',
+    desc:'Kontrola nástrojů pro ochranu proti spamu ve formulářích a komentářích.',
+    defaultStatus:'ok', defaultNote:'Nasazena CAPTCHA, ochrana funguje.' },
+  { id:'devices',   title:'8. Testování na různých zařízeních',
+    desc:'Ověření funkčnosti webu na mobilních telefonech, tabletech, desktopech a v různých prohlížečích.',
+    defaultStatus:'ok', defaultNote:'Web ověřen na všech hlavních zařízeních a prohlížečích.' },
+];
+
+const STATUS_LABEL = { ok:'OK', warn:'Pozor', issue:'Nalezeny chyby', na:'N/A' };
+
+const state = {
+  client:'', web:'', date:'', tech:'',
+  summary:'',
+  items: ITEMS.map(it => ({
+    id: it.id,
+    status: it.defaultStatus,
+    note: it.defaultNote,
+    links: []
+  }))
+};
+
+// ===== Build form =====
+const itemsContainer = document.getElementById('items');
+ITEMS.forEach((cfg, idx) => {
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  card.innerHTML = `
+    <div class="item-card-title">${cfg.title}</div>
+    <div class="row">
+      <select data-bind="status" data-idx="${idx}">
+        <option value="ok">OK</option>
+        <option value="warn">Pozor</option>
+        <option value="issue">Nalezeny chyby</option>
+        <option value="na">N/A</option>
+      </select>
+      <textarea data-bind="note" data-idx="${idx}" rows="2" placeholder="Poznámka / co bylo provedeno…"></textarea>
+    </div>
+    ${cfg.hasLinks ? `
+      <div class="links-list" data-links-for="${idx}"></div>
+      <button class="add-link" data-add-link="${idx}">+ Přidat nefunkční odkaz</button>
+    ` : ''}
+  `;
+  itemsContainer.appendChild(card);
+
+  card.querySelector('select').value = state.items[idx].status;
+  card.querySelector('textarea').value = state.items[idx].note;
+});
+
+// ===== Bindings =====
+function setDate(d) {
+  state.date = d;
+  document.getElementById('f_date').value = d;
+}
+const today = new Date().toISOString().slice(0,10);
+setDate(today);
+
+document.querySelectorAll('#f_client,#f_web,#f_date,#f_tech,#f_summary').forEach(el => {
+  el.addEventListener('input', () => {
+    const key = el.id.replace('f_','') === 'summary' ? 'summary' : el.id.replace('f_','');
+    state[key] = el.value;
+    render();
+  });
+});
+
+itemsContainer.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.bind) {
+    const idx = +t.dataset.idx;
+    state.items[idx][t.dataset.bind] = t.value;
+    render();
+  }
+});
+
+itemsContainer.addEventListener('click', e => {
+  if (e.target.dataset.addLink !== undefined) {
+    const idx = +e.target.dataset.addLink;
+    state.items[idx].links.push({ url:'', text:'' });
+    renderLinkRows(idx);
+    render();
+  }
+  if (e.target.dataset.removeLink !== undefined) {
+    const [idx, li] = e.target.dataset.removeLink.split(':').map(Number);
+    state.items[idx].links.splice(li, 1);
+    renderLinkRows(idx);
+    render();
+  }
+});
+
+itemsContainer.addEventListener('input', e => {
+  if (e.target.dataset.linkField) {
+    const [idx, li] = e.target.dataset.linkIdx.split(':').map(Number);
+    state.items[idx].links[li][e.target.dataset.linkField] = e.target.value;
+    render();
+  }
+});
+
+function renderLinkRows(idx) {
+  const wrap = document.querySelector(`[data-links-for="${idx}"]`);
+  wrap.innerHTML = state.items[idx].links.map((l, li) => `
+    <div class="link-row">
+      <input type="text" placeholder="URL kde se nachází" value="${escapeAttr(l.url)}"
+             data-link-field="url" data-link-idx="${idx}:${li}">
+      <input type="text" placeholder="Text / cíl odkazu" value="${escapeAttr(l.text)}"
+             data-link-field="text" data-link-idx="${idx}:${li}">
+      <button data-remove-link="${idx}:${li}" title="Odstranit">×</button>
+    </div>
+  `).join('');
+}
+
+// ===== Render preview =====
+function render() {
+  document.getElementById('p_client').textContent = state.client || '—';
+  document.getElementById('p_web').textContent    = state.web || '—';
+  document.getElementById('p_tech').textContent   = state.tech || '—';
+  document.getElementById('p_tech2').textContent  = state.tech ? `Digiday – ${state.tech}` : '—';
+
+  const dateFmt = state.date ? formatDateCs(state.date) : '—';
+  document.getElementById('p_date').textContent  = dateFmt;
+  document.getElementById('p_date2').textContent = dateFmt;
+
+  const summaryEl = document.getElementById('p_summary');
+  summaryEl.textContent = state.summary || '';
+
+  const wrap = document.getElementById('p_items');
+  wrap.innerHTML = state.items.map((it, idx) => {
+    const cfg = ITEMS[idx];
+    const noteHtml = it.note ? `<div class="note"><strong>Poznámka:</strong> ${escapeHtml(it.note)}</div>` : '';
+    let linksHtml = '';
+    if (cfg.hasLinks && it.links.length) {
+      linksHtml = `
+        <div class="note"><strong>Nefunkční / přesměrované odkazy:</strong>
+          <table class="subtable">
+            <thead><tr><th style="width:55%">URL kde se odkaz nachází</th><th>Text / cíl odkazu</th></tr></thead>
+            <tbody>
+              ${it.links.map(l => `
+                <tr>
+                  <td>${l.url ? `<a href="${escapeAttr(l.url)}">${escapeHtml(l.url)}</a>` : ''}</td>
+                  <td>${escapeHtml(l.text)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+    return `
+      <div class="item ${it.status}">
+        <div class="item-head">
+          <div class="item-title">${cfg.title}</div>
+          <span class="badge ${it.status}">${STATUS_LABEL[it.status]}</span>
+        </div>
+        <p class="desc">${cfg.desc}</p>
+        ${noteHtml}
+        ${linksHtml}
+      </div>`;
+  }).join('');
+}
+
+function formatDateCs(iso) {
+  const [y,m,d] = iso.split('-');
+  return `${+d}. ${+m}. ${y}`;
+}
+function escapeHtml(s='') {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s='') { return escapeHtml(s); }
+
+// ===== AI integration =====
+const AI_TOOL = {
+  name: 'fill_protocol',
+  description: 'Vyplnit protokol o profylaxi webu na základě e-mailu od programátora.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      client:  { type: 'string', description: 'Název klienta / firmy. Pokud není v e-mailu zmíněn, vrať prázdný řetězec.' },
+      web:     { type: 'string', description: 'URL webu nebo doména (např. www.example.cz). Pokud není zmíněna, prázdný řetězec.' },
+      date:    { type: 'string', description: 'Datum provedení profylaxe ve formátu YYYY-MM-DD. Pokud není v e-mailu, použij dnešní datum.' },
+      tech:    { type: 'string', description: 'Jméno technika/programátora. Pokud není zmíněno, prázdný řetězec.' },
+      summary: { type: 'string', description: 'Krátký souhrn / doporučení pro klienta v češtině (1–3 věty). Pokud nic zvláštního, prázdný řetězec.' },
+      items: {
+        type: 'array',
+        description: 'Stav 8 kontrolních bodů. VŽDY vrať všech 8 položek v tomto pořadí: zaloha, wp, plugins, security, links, content, spam, devices.',
+        items: {
+          type: 'object',
+          properties: {
+            id:     { type: 'string', enum: ['zaloha','wp','plugins','security','links','content','spam','devices'] },
+            status: {
+              type: 'string',
+              enum: ['ok','warn','issue','na'],
+              description: 'ok = vše v pořádku; warn = drobný problém / pozor (např. plugin nelze update); issue = nalezeny chyby (např. nefunkční odkazy); na = neprovedeno / netýká se. Pokud není v e-mailu zmíněno, použij ok.'
+            },
+            note:   { type: 'string', description: 'Poznámka v češtině – konkrétně co bylo zjištěno/provedeno. Pokud není zmíněno, prázdný řetězec.' },
+            links:  {
+              type: 'array',
+              description: 'Pouze pro id=links: seznam nefunkčních odkazů. Jinak prázdné pole.',
+              items: {
+                type: 'object',
+                properties: {
+                  url:  { type: 'string', description: 'Stránka, kde se odkaz nachází.' },
+                  text: { type: 'string', description: 'Text odkazu nebo cíl odkazu.' }
+                },
+                required: ['url','text']
+              }
+            }
+          },
+          required: ['id','status','note','links']
+        }
+      }
+    },
+    required: ['client','web','date','tech','summary','items']
+  }
+};
+
+const AI_SYSTEM = `Jsi asistent webové agentury Digiday. Z e-mailu od programátora extrahuješ informace o provedené profylaxi webu a vyplníš strukturovaný protokol pomocí nástroje fill_protocol.
+
+8 kontrolních bodů (vždy vrať všechny v tomto pořadí):
+1. zaloha – Zálohování webu (typicky řeší hosting automaticky)
+2. wp – Aktualizace WordPress (jádro, šablona)
+3. plugins – Aktualizace plug-inů a modulů
+4. security – Ověření zabezpečení (SSL, hackerské útoky)
+5. links – Kontrola odkazů (vyplň links[] pokud jsou nefunkční odkazy)
+6. content – Správa obsahu (typicky N/A – jen na vyžádání klienta)
+7. spam – Ochrana proti spamu (CAPTCHA, formuláře)
+8. devices – Testování na různých zařízeních
+
+Pravidla:
+- Pokud bod není v e-mailu zmíněn, dej status "ok" a note prázdný (ne "neuvedeno").
+- Nevymýšlej fakta, která v e-mailu nejsou.
+- Pokud programátor zmiňuje problém (např. plugin nelze updatovat, nefunkční odkaz, vypršený SSL), zvol odpovídající status (warn/issue).
+- Datum: pokud není v textu, použij dnešní datum.
+- Vše v češtině.`;
+
+async function processEmail() {
+  const apiKey = localStorage.getItem('anthropic_api_key');
+  if (!apiKey) {
+    setAiStatus('Nejdřív nastavte API klíč (⚙ vpravo nahoře).', 'error');
+    openModal();
+    return;
+  }
+  const text = document.getElementById('ai_input').value.trim();
+  if (!text) {
+    setAiStatus('Vložte text mailu.', 'error');
+    return;
+  }
+
+  setAiStatus('<span class="spinner"></span>Zpracovávám…');
+  document.getElementById('btnAi').disabled = true;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 2048,
+        system: AI_SYSTEM + `\n\nDnešní datum: ${new Date().toISOString().slice(0,10)}`,
+        tools: [AI_TOOL],
+        tool_choice: { type: 'tool', name: 'fill_protocol' },
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const toolUse = data.content.find(c => c.type === 'tool_use');
+    if (!toolUse) throw new Error('AI nevrátila strukturovaná data.');
+
+    applyAiResult(toolUse.input);
+    setAiStatus('✓ Hotovo – formulář vyplněn. Zkontrolujte a upravte.', 'ok');
+  } catch (e) {
+    console.error(e);
+    setAiStatus('Chyba: ' + e.message, 'error');
+  } finally {
+    document.getElementById('btnAi').disabled = false;
+  }
+}
+
+function applyAiResult(r) {
+  if (r.client)  { state.client = r.client;   document.getElementById('f_client').value  = r.client; }
+  if (r.web)     { state.web = r.web;         document.getElementById('f_web').value     = r.web; }
+  if (r.date)    { state.date = r.date;       document.getElementById('f_date').value    = r.date; }
+  if (r.tech)    { state.tech = r.tech;       document.getElementById('f_tech').value    = r.tech; }
+  if (r.summary !== undefined) { state.summary = r.summary; document.getElementById('f_summary').value = r.summary; }
+
+  if (Array.isArray(r.items)) {
+    r.items.forEach(aiItem => {
+      const idx = ITEMS.findIndex(c => c.id === aiItem.id);
+      if (idx === -1) return;
+      state.items[idx].status = aiItem.status || 'ok';
+      state.items[idx].note   = aiItem.note || '';
+      state.items[idx].links  = Array.isArray(aiItem.links) ? aiItem.links : [];
+
+      const card = itemsContainer.children[idx];
+      card.querySelector('select').value   = state.items[idx].status;
+      card.querySelector('textarea').value = state.items[idx].note;
+      if (ITEMS[idx].hasLinks) renderLinkRows(idx);
+    });
+  }
+  render();
+}
+
+function setAiStatus(msg, type='') {
+  const el = document.getElementById('ai_status');
+  el.innerHTML = msg;
+  el.className = 'ai-status ' + type;
+}
+
+document.getElementById('btnAi').addEventListener('click', processEmail);
+
+// ===== API key modal =====
+function openModal() {
+  document.getElementById('apiKeyInput').value = localStorage.getItem('anthropic_api_key') || '';
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('show');
+}
+document.getElementById('btnSettings').addEventListener('click', openModal);
+document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+document.getElementById('btnModalSave').addEventListener('click', () => {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (key) localStorage.setItem('anthropic_api_key', key);
+  else localStorage.removeItem('anthropic_api_key');
+  closeModal();
+  setAiStatus(key ? 'API klíč uložen.' : 'API klíč vymazán.', key ? 'ok' : '');
+});
+document.getElementById('modalBg').addEventListener('click', e => {
+  if (e.target.id === 'modalBg') closeModal();
+});
+
+// ===== Buttons =====
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+document.getElementById('btnSave').addEventListener('click', () => {
+  localStorage.setItem('digiday_protocol', JSON.stringify(state));
+  alert('Uloženo do prohlížeče.');
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  if (!confirm('Vyčistit formulář?')) return;
+  localStorage.removeItem('digiday_protocol');
+  location.reload();
+});
+
+// ===== Load saved =====
+const saved = localStorage.getItem('digiday_protocol');
+if (saved) {
+  try {
+    const parsed = JSON.parse(saved);
+    Object.assign(state, parsed);
+    state.items = ITEMS.map((cfg,i) => parsed.items?.[i] || { id:cfg.id, status:cfg.defaultStatus, note:cfg.defaultNote, links:[] });
+    document.getElementById('f_client').value  = state.client;
+    document.getElementById('f_web').value     = state.web;
+    document.getElementById('f_date').value    = state.date || today;
+    document.getElementById('f_tech').value    = state.tech;
+    document.getElementById('f_summary').value = state.summary;
+    state.items.forEach((it,idx) => {
+      const card = itemsContainer.children[idx];
+      card.querySelector('select').value   = it.status;
+      card.querySelector('textarea').value = it.note;
+      if (ITEMS[idx].hasLinks) renderLinkRows(idx);
+    });
+  } catch(e) { console.warn(e); }
+}
+
+render();
+</script>
+</body>
+</html>

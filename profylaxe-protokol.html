@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Digiday – Protokol o profylaxi webu</title>
+<style>
+  @page {
+    size: A4;
+    margin: 14mm 14mm 18mm 14mm;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: #313746;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    background: #fff;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #e0007a;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .header .logo { height: 48px; width: auto; }
+  .header .doc-title {
+    text-align: right;
+  }
+  .header .doc-title h1 {
+    margin: 0;
+    font-size: 18pt;
+    font-weight: 700;
+    color: #313746;
+    letter-spacing: -0.3px;
+  }
+  .header .doc-title .subtitle {
+    color: #e0007a;
+    font-size: 10pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-top: 2px;
+  }
+
+  /* ===== Client meta box ===== */
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    background: #f7f7f9;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 22px;
+  }
+  .meta .field { padding: 2px 12px; border-left: 1px solid #e5e7eb; }
+  .meta .field:first-child { border-left: 0; padding-left: 0; }
+  .meta .label {
+    font-size: 8pt;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .meta .value {
+    font-size: 11pt;
+    color: #313746;
+    font-weight: 600;
+  }
+
+  /* ===== Section title ===== */
+  h2.section {
+    color: #313746;
+    font-size: 12pt;
+    margin: 0 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  h2.section .accent { color: #e0007a; }
+
+  /* ===== Activity items ===== */
+  .item {
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #e0007a;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 9px;
+    page-break-inside: avoid;
+  }
+  .item.ok       { border-left-color: #10b981; }
+  .item.warn     { border-left-color: #f59e0b; }
+  .item.issue    { border-left-color: #ef4444; }
+
+  .item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .item-title {
+    font-weight: 700;
+    font-size: 11pt;
+    color: #313746;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge.ok    { background: #d1fae5; color: #065f46; }
+  .badge.warn  { background: #fef3c7; color: #92400e; }
+  .badge.issue { background: #fee2e2; color: #991b1b; }
+
+  .item .desc {
+    color: #4b5563;
+    font-size: 10pt;
+    margin: 0 0 6px 0;
+  }
+  .item .note {
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: #fafafa;
+    border-radius: 4px;
+    font-size: 10pt;
+    color: #313746;
+  }
+  .item .note strong { color: #e0007a; }
+
+  /* Sub-table (broken links) */
+  table.subtable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 9.5pt;
+  }
+  table.subtable th, table.subtable td {
+    border: 1px solid #e5e7eb;
+    padding: 5px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.subtable th {
+    background: #f7f7f9;
+    color: #313746;
+    font-weight: 600;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  table.subtable td a { color: #e0007a; text-decoration: none; word-break: break-all; }
+
+  /* ===== Summary ===== */
+  .summary {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: linear-gradient(90deg, rgba(224,0,122,0.06), rgba(224,0,122,0));
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #313746;
+    border-radius: 4px;
+  }
+  .summary h3 {
+    margin: 0 0 6px 0;
+    font-size: 11pt;
+    color: #313746;
+  }
+  .summary p { margin: 0; color: #4b5563; }
+
+  /* ===== Signature ===== */
+  .signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 28px;
+  }
+  .sig {
+    border-top: 1px solid #313746;
+    padding-top: 6px;
+    font-size: 9.5pt;
+    color: #6b7280;
+  }
+  .sig strong { color: #313746; }
+
+  /* ===== Footer ===== */
+  .footer {
+    margin-top: 24px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 8.5pt;
+    color: #6b7280;
+    display: flex;
+    justify-content: space-between;
+  }
+  .footer a { color: #e0007a; text-decoration: none; }
+
+  @media print {
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="header">
+    <img class="logo" src="digiday_logo.svg" alt="Digiday">
+    <div class="doc-title">
+      <h1>Protokol o profylaxi webu</h1>
+      <div class="subtitle">Pravidelná údržba a kontrola</div>
+    </div>
+  </header>
+
+  <section class="meta">
+    <div class="field">
+      <div class="label">Klient</div>
+      <div class="value">[Doplňte]</div>
+    </div>
+    <div class="field">
+      <div class="label">Web</div>
+      <div class="value">www.priklad.cz</div>
+    </div>
+    <div class="field">
+      <div class="label">Datum</div>
+      <div class="value">27. 4. 2026</div>
+    </div>
+    <div class="field">
+      <div class="label">Technik</div>
+      <div class="value">[Doplňte]</div>
+    </div>
+  </section>
+
+  <h2 class="section">Provedené úkony <span class="accent">/</span> kontrolní body</h2>
+
+  <!-- 1 -->
+  <div class="item ok">
+    <div class="item-head">
+      <div class="item-title">1. Zálohování webu</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <p class="desc">Pravidelné zálohování webového obsahu a databáze pro případ technických problémů, hackerského útoku nebo havárií.</p>
+    <div class="note"><strong>Poznámka:</strong> Zálohování provádí hosting automaticky.</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="item ok">
+    <div class="item-head">
+      <div class="item-title">2. Aktualizace redakčního systému WordPress</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <p class="desc">Aktualizace CMS WordPress (jádro, šablona) na aktuální verzi – velmi důležité pro chod a bezpečnost webu.</p>
+    <div class="note"><strong>Poznámka:</strong> Provedena aktualizace na nejnovější dostupnou verzi.</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="item warn">
+    <div class="item-head">
+      <div class="item-title">3. Aktualizace plug-inů a modulů</div>
+      <span class="badge warn">Pozor</span>
+    </div>
+    <p class="desc">Aktualizace plug-inů a modulů tak, aby korektně fungovaly v rámci celého CMS.</p>
+    <div class="note">
+      <strong>Poznámka:</strong> Některé pluginy nelze aktualizovat:<br>
+      <strong>WPBakery Page Builder</strong> – prémiový plugin, ke kterému nebyla zakoupena licence, nelze tedy provést update. Doporučujeme zvážit zakoupení licence pro budoucí aktualizace a bezpečnost.
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="item ok">
+    <div class="item-head">
+      <div class="item-title">4. Ověření zabezpečení</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <p class="desc">Kontrola a zajištění bezpečnosti webu, včetně SSL certifikátu a ochrany před hackerskými útoky.</p>
+    <div class="note"><strong>Poznámka:</strong> SSL certifikát platný, bezpečnostní nastavení v pořádku.</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="item issue">
+    <div class="item-head">
+      <div class="item-title">5. Kontrola odkazů</div>
+      <span class="badge issue">Nalezeny chyby</span>
+    </div>
+    <p class="desc">Ověření, zda všechny odkazy na webu fungují správně a nevedou na chybové stránky.</p>
+    <div class="note">
+      <strong>Nefunkční / přesměrované odkazy:</strong>
+      <table class="subtable">
+        <thead>
+          <tr>
+            <th style="width:55%">URL kde se odkaz nachází</th>
+            <th>Text / cíl odkazu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://ochana.cz/obchody/kik/">https://ochana.cz/obchody/kik/</a></td>
+            <td>www.kik-textilien.cz</td>
+          </tr>
+          <tr>
+            <td><a href="https://ochana.cz/obchody/ccc/">https://ochana.cz/obchody/ccc/</a></td>
+            <td>https://www.instagram.com/cccshoesbags/</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="item ok">
+    <div class="item-head">
+      <div class="item-title">6. Správa obsahu</div>
+      <span class="badge ok">N/A</span>
+    </div>
+    <p class="desc">Možnost menších aktualizací obsahu (novinky, akce, kontakty…).</p>
+    <div class="note"><strong>Poznámka:</strong> Správa obsahu se provádí pouze na vyžádání klienta. V tomto období bez požadavku.</div>
+  </div>
+
+  <!-- 7 -->
+  <div class="item ok">
+    <div class="item-head">
+      <div class="item-title">7. Ochrana proti spamu</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <p class="desc">Kontrola nástrojů pro ochranu proti spamu ve formulářích a komentářích.</p>
+    <div class="note"><strong>Poznámka:</strong> Nasazena CAPTCHA, ochrana funguje.</div>
+  </div>
+
+  <!-- 8 -->
+  <div class="item ok">
+    <div class="item-head">
+      <div class="item-title">8. Testování na různých zařízeních</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <p class="desc">Ověření funkčnosti webu na mobilních telefonech, tabletech, desktopech a v různých prohlížečích.</p>
+    <div class="note"><strong>Poznámka:</strong> Web ověřen na všech hlavních zařízeních a prohlížečích, bez závad.</div>
+  </div>
+
+  <section class="summary">
+    <h3>Souhrn / doporučení</h3>
+    <p>Profylaxe proběhla v pořádku. Doporučujeme řešit zakoupení licence k WPBakery Page Builderu a opravu nefunkčních odkazů uvedených výše.</p>
+  </section>
+
+  <div class="signatures">
+    <div class="sig">
+      <strong>Vypracoval</strong><br>
+      Digiday – jméno technika
+    </div>
+    <div class="sig">
+      <strong>Datum</strong><br>
+      27. 4. 2026
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>Digiday s.r.o. &nbsp;·&nbsp; <a href="https://digiday.cz">digiday.cz</a></span>
+    <span>Protokol o profylaxi webu</span>
+  </footer>
+
+</body>
+</html>
