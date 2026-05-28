@@ -746,7 +746,11 @@ const AI_SYSTEM = `Jsi asistent webové agentury Digiday. Z e-mailu od programá
 2. wp – Aktualizace WordPress (jádro, šablona)
 3. plugins – Aktualizace plug-inů a modulů
 4. security – Ověření zabezpečení (SSL, hackerské útoky)
-5. links – Kontrola odkazů. Pokud e-mail obsahuje výpis z link checkeru (tabulka se statusy 404, 403, Timeout, "Not found", "Too many redirections", "certificate invalid" apod.) NEBO jakýkoli seznam chybných URL, MUSÍŠ vyplnit links[] – jeden objekt pro KAŽDÝ jeden chybný odkaz, žádný nevynechej. Status zobraz vedle textu, např. "Zobrazit (404)", "Pojez Fest (Timeout)", "Spojujeme Česko (Neplatný SSL)". Pokud text linku chybí nebo je "<No Text>", dej jen status v závorce. Pokud je nefunkčních odkazů víc než 5, použij status "issue", do note napiš souhrn (kolik a jakého typu) a do links[] vyplň všechny.
+5. links – Kontrola odkazů. KRITICKÉ PRAVIDLO: Pokud e-mail obsahuje jakýkoli seznam chybných URL (výpis z link checkeru, tabulka se statusy 404, 403, Timeout, "Not found", "Too many redirections", "certificate invalid" apod.), MUSÍŠ:
+   a) nastavit status="issue"
+   b) vyplnit links[] – JEDEN OBJEKT PRO KAŽDÝ JEDEN ODKAZ z e-mailu. Pokud je v e-mailu 25 odkazů, vrátíš 25 objektů v links[]. NIKDY je nevynech, NIKDY je nesumarizuj pouze v textu.
+   c) do note napiš jen krátký kontext (např. "Tool má limit 2000 odkazů, na webu jich je víc"), případně 1 větu shrnutí. NIKDY do note nevypisuj seznam URL – ty patří do links[].
+   Mapování: url = chybná cílová URL (např. "https://example.cz/strana"), text = původní text linku + status v závorce (např. "Zobrazit (404)", "Pojez Fest (Timeout)", "Spojujeme Česko (Neplatný SSL certifikát)"). Pokud text linku chybí / je "<No Text>", dej jen "(404)" / "(Timeout)" atd. Klient potřebuje VIDĚT každou nefunkční URL v tabulce v PDF – proto je extrakce do links[] nezbytná.
 6. content – Správa obsahu (typicky N/A – jen na vyžádání klienta)
 7. spam – Ochrana proti spamu (CAPTCHA, formuláře)
 8. devices – Testování na různých zařízeních
