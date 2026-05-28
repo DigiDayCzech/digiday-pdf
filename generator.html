@@ -628,9 +628,9 @@ function renderLinkRows(idx) {
   const wrap = document.querySelector(`[data-links-for="${idx}"]`);
   wrap.innerHTML = state.items[idx].links.map((l, li) => `
     <div class="link-row">
-      <input type="text" placeholder="URL kde se nachází" value="${escapeAttr(l.url)}"
+      <input type="text" placeholder="Nefunkční URL" value="${escapeAttr(l.url)}"
              data-link-field="url" data-link-idx="${idx}:${li}">
-      <input type="text" placeholder="Text / cíl odkazu" value="${escapeAttr(l.text)}"
+      <input type="text" placeholder="Text odkazu / status" value="${escapeAttr(l.text)}"
              data-link-field="text" data-link-idx="${idx}:${li}">
       <button data-remove-link="${idx}:${li}" title="Odstranit">×</button>
     </div>
@@ -660,7 +660,7 @@ function render() {
       linksHtml = `
         <div class="note"><strong>Nefunkční / přesměrované odkazy:</strong>
           <table class="subtable">
-            <thead><tr><th style="width:55%">URL kde se odkaz nachází</th><th>Text / cíl odkazu</th></tr></thead>
+            <thead><tr><th style="width:55%">Nefunkční URL</th><th>Text odkazu / status</th></tr></thead>
             <tbody>
               ${it.links.map(l => `
                 <tr>
@@ -720,12 +720,12 @@ const AI_TOOL = {
             note:   { type: 'string', description: 'Poznámka v češtině – konkrétně co bylo zjištěno/provedeno. Pokud není zmíněno, prázdný řetězec.' },
             links:  {
               type: 'array',
-              description: 'Pouze pro id=links: seznam nefunkčních odkazů. Jinak prázdné pole.',
+              description: 'Pouze pro id=links: seznam nefunkčních / chybových odkazů z výstupu link checkeru. Jinak prázdné pole. VŽDY vyplň VŠECHNY odkazy, které jsou v e-mailu uvedené (nelimituj se počtem).',
               items: {
                 type: 'object',
                 properties: {
-                  url:  { type: 'string', description: 'Stránka, kde se odkaz nachází.' },
-                  text: { type: 'string', description: 'Text odkazu nebo cíl odkazu.' }
+                  url:  { type: 'string', description: 'Nefunkční / chybová cílová URL (např. "https://example.cz/stranka").' },
+                  text: { type: 'string', description: 'Text odkazu plus status v závorce, např. "Zobrazit (404)", "Pojez Fest (Timeout)", "Spojujeme Česko (Neplatný SSL)". Pokud je text linku prázdný / <No Text>, dej jen status, např. "(404)".' }
                 },
                 required: ['url','text']
               }
@@ -746,7 +746,7 @@ const AI_SYSTEM = `Jsi asistent webové agentury Digiday. Z e-mailu od programá
 2. wp – Aktualizace WordPress (jádro, šablona)
 3. plugins – Aktualizace plug-inů a modulů
 4. security – Ověření zabezpečení (SSL, hackerské útoky)
-5. links – Kontrola odkazů (vyplň links[] pokud jsou nefunkční odkazy)
+5. links – Kontrola odkazů. Pokud e-mail obsahuje výpis z link checkeru (tabulka se statusy 404, 403, Timeout, "Not found", "Too many redirections", "certificate invalid" apod.) NEBO jakýkoli seznam chybných URL, MUSÍŠ vyplnit links[] – jeden objekt pro KAŽDÝ jeden chybný odkaz, žádný nevynechej. Status zobraz vedle textu, např. "Zobrazit (404)", "Pojez Fest (Timeout)", "Spojujeme Česko (Neplatný SSL)". Pokud text linku chybí nebo je "<No Text>", dej jen status v závorce. Pokud je nefunkčních odkazů víc než 5, použij status "issue", do note napiš souhrn (kolik a jakého typu) a do links[] vyplň všechny.
 6. content – Správa obsahu (typicky N/A – jen na vyžádání klienta)
 7. spam – Ochrana proti spamu (CAPTCHA, formuláře)
 8. devices – Testování na různých zařízeních
@@ -785,7 +785,7 @@ async function processEmail() {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 2048,
+        max_tokens: 8192,
         system: AI_SYSTEM + `\n\nDnešní datum: ${new Date().toISOString().slice(0,10)}`,
         tools: [AI_TOOL],
         tool_choice: { type: 'tool', name: 'fill_protocol' },
