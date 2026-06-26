@@ -359,19 +359,18 @@
 
       <div class="parties">
         <div class="party">
-          <div class="party-title">Zhotovitel</div>
-          <div class="prow"><div class="k">Název</div><div class="v">DigiDay Czech s.r.o.</div></div>
+          <div class="party-title">Poskytovatel</div>
+          <div class="prow"><div class="k">Název</div><div class="v">Digiday Creative s.r.o.</div></div>
           <div class="prow"><div class="k">Sídlo</div><div class="v">1. Máje 481/16, Mariánské Hory, 709 00 Ostrava</div></div>
-          <div class="prow"><div class="k">IČO</div><div class="v">06078362</div></div>
-          <div class="prow"><div class="k">DIČ</div><div class="v">CZ06078362</div></div>
+          <div class="prow"><div class="k">IČO</div><div class="v">06117589</div></div>
           <div class="prow"><div class="k">Zastoupený</div><div class="v" id="p_digisig_party">Martin Klimánek, jednatel</div></div>
         </div>
         <div class="party">
-          <div class="party-title">Odběratel</div>
+          <div class="party-title">Objednatel</div>
           <div class="prow"><div class="k">Název</div><div class="v" id="p_subject">—</div></div>
           <div class="prow"><div class="k">Sídlo</div><div class="v" id="p_seat">—</div></div>
           <div class="prow"><div class="k">IČO</div><div class="v" id="p_ico">—</div></div>
-          <div class="prow"><div class="k">DIČ</div><div class="v" id="p_dic">—</div></div>
+          <div class="prow"><div class="k">DIČ</div><div class="v" id="p_dic" style="display:none"></div></div>
           <div class="prow"><div class="k">Zastoupený</div><div class="v" id="p_rep">—</div></div>
         </div>
       </div>
@@ -389,12 +388,12 @@
       </div>
 
       <p class="legal" id="p_legal_contract"></p>
-      <p class="legal">Tento předávací protokol potvrzuje splnění předmětu díla dle uzavřené smlouvy a zakládá povinnost uhradit případné zbývající platby dle smluvních podmínek.</p>
+      <p class="legal">Tento předávací protokol potvrzuje splnění předmětu plnění dle uzavřené Smlouvy o poskytování programátorských služeb a zakládá povinnost uhradit případné zbývající platby dle smluvních podmínek.</p>
 
       <div class="signatures">
         <div class="sig">
           <div class="sig-place"><span id="p_digiplace">V Ostravě</span> dne: <span id="p_date_l">—</span></div>
-          <div class="sig-for">Za DigiDay Czech s.r.o.</div>
+          <div class="sig-for">Za Digiday Creative s.r.o.</div>
           <div class="sig-line" id="p_digisig">Martin Klimánek, jednatel</div>
         </div>
         <div class="sig">
@@ -405,7 +404,7 @@
       </div>
 
       <footer class="footer">
-        <span>DigiDay Czech s.r.o. &nbsp;·&nbsp; IČO 06078362 &nbsp;·&nbsp; <a href="https://digiday.cz">digiday.cz</a></span>
+        <span>Digiday Creative s.r.o. &nbsp;·&nbsp; IČO 06117589 &nbsp;·&nbsp; <a href="https://digiday.cz">digiday.cz</a></span>
         <span id="p_footer_project">Předávací protokol · TUKAN</span>
       </footer>
     </div>
@@ -423,8 +422,9 @@ const ITEMS = [
 ];
 
 const state = {
-  project:'TUKAN', projectdesc:'',
-  subject:'', ico:'', dic:'', seat:'', rep:'', place:'', date:'',
+  project:'TUKAN', projectdesc:'Programátorské práce – tvorba webových stránek (WordPress)',
+  subject:'H.P. 36 s.r.o.', ico:'05052955', dic:'', seat:'Poříčí 2465/28, 67801 Blansko',
+  rep:'Michal Ďuračka, ředitel společnosti', place:'V Blansku', date:'',
   digiplace:'V Ostravě', digisig:'Martin Klimánek, jednatel',
   contract:'',
   noReservations:true, reservations:'',
@@ -496,8 +496,8 @@ function render() {
   const descPart = projDesc ? ` (${escapeHtml(projDesc)})` : '';
   document.getElementById('p_intro').innerHTML =
     `<strong>${escapeHtml(subj)}</strong> tímto potvrzuje, že převzal/a od společnosti ` +
-    `<strong>DigiDay Czech s.r.o.</strong>, se sídlem 1. Máje 481/16, Mariánské Hory, 709 00 Ostrava, ` +
-    `IČO: 06078362, DIČ: CZ06078362, zhotovený projekt <strong>${escapeHtml(proj)}${descPart}</strong>.`;
+    `<strong>Digiday Creative s.r.o.</strong>, se sídlem 1. Máje 481/16, Mariánské Hory, 709 00 Ostrava, ` +
+    `IČO: 06117589, výsledky programátorských prací v rámci projektu <strong>${escapeHtml(proj)}${descPart}</strong>.`;
 
   const contractEl = document.getElementById('p_legal_contract');
   if (state.contract) {
@@ -552,13 +552,15 @@ if (saved) {
     Object.assign(state, p);
     if (!Array.isArray(state.items) || state.items.length !== ITEMS.length)
       state.items = ITEMS.map(() => true);
-    Object.keys(fieldMap).forEach(id => { document.getElementById(id).value = state[fieldMap[id]] || ''; });
-    document.getElementById('f_date').value = state.date || today;
-    document.getElementById('sat_yes').checked = state.noReservations;
-    document.getElementById('sat_no').checked = !state.noReservations;
-    state.items.forEach((on,i) => { checksEl.children[i].querySelector('input').checked = on; });
   } catch(e) { console.warn(e); }
 }
+
+// Predvyplnění formuláře ze state (výchozí hodnoty + případně localStorage)
+Object.keys(fieldMap).forEach(id => { document.getElementById(id).value = state[fieldMap[id]] || ''; });
+document.getElementById('f_date').value = state.date || today;
+document.getElementById('sat_yes').checked = state.noReservations;
+document.getElementById('sat_no').checked = !state.noReservations;
+state.items.forEach((on,i) => { checksEl.children[i].querySelector('input').checked = on; });
 
 toggleReason();
 render();
