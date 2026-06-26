@@ -536,16 +536,16 @@ function escapeHtml(s='') {
 
 document.getElementById('btnPrint').addEventListener('click', () => window.print());
 document.getElementById('btnSave').addEventListener('click', () => {
-  localStorage.setItem('digiday_predavaci_b2b', JSON.stringify(state));
+  localStorage.setItem('digiday_predavaci_b2b_v2', JSON.stringify(state));
   alert('Uloženo do prohlížeče.');
 });
 document.getElementById('btnReset').addEventListener('click', () => {
   if (!confirm('Vyčistit formulář?')) return;
-  localStorage.removeItem('digiday_predavaci_b2b');
+  localStorage.removeItem('digiday_predavaci_b2b_v2');
   location.reload();
 });
 
-const saved = localStorage.getItem('digiday_predavaci_b2b');
+const saved = localStorage.getItem('digiday_predavaci_b2b_v2');
 if (saved) {
   try {
     const p = JSON.parse(saved);
