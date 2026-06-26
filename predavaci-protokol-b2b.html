@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digiday – Generátor předávacího protokolu B2B</title>
+<style>
+  :root {
+    --pink: #e0007a;
+    --dark: #313746;
+    --bg: #f4f4f7;
+    --border: #e5e7eb;
+    --muted: #6b7280;
+    --ok: #10b981;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--dark);
+    background: var(--bg);
+  }
+
+  .topbar {
+    background: #fff;
+    border-bottom: 3px solid var(--pink);
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar img { height: 36px; }
+  .topbar h1 { margin: 0; font-size: 14pt; font-weight: 700; color: var(--dark); }
+  .topbar h1 span { color: var(--pink); }
+  .topbar .actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--dark);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 10pt;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn:hover { background: #f7f7f9; }
+  .btn.primary { background: var(--pink); color: #fff; border-color: var(--pink); }
+  .btn.primary:hover { background: #b80064; border-color: #b80064; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 18px;
+    padding: 18px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+
+  .form-panel {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 18px;
+    height: fit-content;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+  .form-panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 11pt;
+    color: var(--dark);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  .form-panel h2.subsection {
+    margin-top: 22px;
+    color: var(--pink);
+    font-size: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .form-panel label.fld {
+    display: block;
+    font-size: 9pt;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin: 10px 0 4px 0;
+  }
+  .form-panel input[type=text],
+  .form-panel input[type=date],
+  .form-panel textarea {
+    width: 100%;
+    padding: 8px 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 10pt;
+    color: var(--dark);
+    font-family: inherit;
+    background: #fff;
+  }
+  .form-panel input:focus,
+  .form-panel textarea:focus {
+    outline: none;
+    border-color: var(--pink);
+    box-shadow: 0 0 0 2px rgba(224,0,122,0.15);
+  }
+  .form-panel textarea { resize: vertical; min-height: 56px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .check-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+  }
+  .check-row:hover { border-color: var(--pink); }
+  .check-row input[type=checkbox] {
+    width: 18px; height: 18px; margin: 1px 0 0 0;
+    accent-color: var(--pink); cursor: pointer; flex: none;
+  }
+  .check-row .cr-text { font-size: 9.8pt; line-height: 1.35; }
+  .check-row .cr-text small { color: var(--muted); display:block; margin-top:2px; }
+
+  .radio-wrap { display: flex; gap: 10px; margin-bottom: 6px; }
+  .radio-wrap label {
+    flex: 1; text-align: center; padding: 9px;
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 10pt; font-weight: 600; cursor: pointer; color: var(--muted);
+  }
+  .radio-wrap input { display: none; }
+  .radio-wrap input:checked + span { color: var(--pink); }
+  .radio-wrap label:has(input:checked) { border-color: var(--pink); background: #fff5fa; }
+
+  .preview-panel { background: #e8e8ee; border-radius: 8px; padding: 24px; overflow: auto; }
+  .page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 16mm;
+    margin: 0 auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    color: var(--dark);
+    font-size: 10.8pt;
+    line-height: 1.55;
+  }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid var(--pink);
+    padding-bottom: 10px; margin-bottom: 22px;
+  }
+  .header img { height: 46px; }
+  .header .doc-title { text-align: right; }
+  .header .doc-title h1 { margin: 0; font-size: 17pt; font-weight: 700; letter-spacing: -0.3px; }
+  .header .doc-title .subtitle {
+    color: var(--pink); font-size: 9.5pt; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px;
+  }
+
+  .parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .party {
+    background: #f7f7f9; border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 16px;
+  }
+  .party .party-title {
+    font-size: 8.5pt; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.6px; font-weight: 700; margin-bottom: 8px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .party .prow { display: grid; grid-template-columns: 90px 1fr; gap: 4px; padding: 2px 0; }
+  .party .prow .k {
+    font-size: 8pt; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.6px; font-weight: 700; padding-top: 2px;
+  }
+  .party .prow .v { font-size: 10pt; font-weight: 600; }
+
+  p.body { margin: 0 0 16px 0; }
+
+  h2.section {
+    color: var(--dark); font-size: 12pt; margin: 4px 0 12px 0;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  h2.section .accent { color: var(--pink); }
+
+  .item {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    border: 1px solid var(--border); border-left: 4px solid var(--ok);
+    border-radius: 4px; padding: 9px 14px; margin-bottom: 8px;
+    page-break-inside: avoid;
+  }
+  .item.no { border-left-color: #cbd5e1; opacity: .75; }
+  .item .it-label { font-size: 10.3pt; }
+  .item .it-num { font-weight: 700; color: var(--pink); margin-right: 6px; }
+  .badge {
+    display: inline-block; font-size: 9pt; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+    background: #d1fae5; color: #065f46;
+  }
+  .badge.no { background: #f3f4f6; color: #6b7280; }
+
+  .satisfaction {
+    margin: 20px 0 16px 0; padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(224,0,122,0.06), rgba(224,0,122,0));
+    border: 1px solid var(--border); border-left: 4px solid var(--dark);
+    border-radius: 4px; font-size: 11pt;
+  }
+  .satisfaction .opt { color: #b9bdc6; font-weight: 700; }
+  .satisfaction .opt.active { color: var(--pink); }
+  .satisfaction .reason { margin-top: 8px; font-size: 10pt; white-space: pre-wrap; }
+  .satisfaction .reason:empty { display: none; }
+
+  p.legal { font-size: 9.5pt; color: #4b5563; margin: 0 0 6px 0; }
+
+  .signatures {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 40px; margin-top: 34px; page-break-inside: avoid;
+  }
+  .sig .sig-place { font-size: 10pt; margin-bottom: 4px; }
+  .sig .sig-for { font-size: 9pt; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; margin-bottom: 30px; }
+  .sig .sig-line { border-top: 1px solid var(--dark); padding-top: 6px; font-size: 10pt; font-weight: 600; }
+
+  .footer {
+    margin-top: 28px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 8.5pt; color: var(--muted);
+    display: flex; justify-content: space-between;
+  }
+  .footer a { color: var(--pink); text-decoration: none; }
+
+  @page { size: A4; margin: 14mm 14mm 16mm 14mm; }
+  @media print {
+    body { background: #fff; }
+    .topbar, .form-panel { display: none !important; }
+    .layout { display: block; padding: 0; max-width: none; }
+    .preview-panel { background: none; padding: 0; }
+    .page { box-shadow: none; width: auto; min-height: auto; padding: 0; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <img src="digiday_logo.svg" alt="Digiday">
+    <h1>Generátor protokolu <span>·</span> předávací protokol B2B</h1>
+  </div>
+  <div class="actions">
+    <button class="btn" id="btnReset">Vyčistit</button>
+    <button class="btn" id="btnSave">Uložit</button>
+    <button class="btn primary" id="btnPrint">Stáhnout PDF</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ============ FORM ============ -->
+  <aside class="form-panel">
+
+    <h2>Projekt</h2>
+    <label class="fld">Název projektu</label>
+    <input type="text" id="f_project" placeholder="např. TUKAN" value="TUKAN">
+
+    <label class="fld">Popis / specifikace projektu</label>
+    <input type="text" id="f_projectdesc" placeholder="např. Webový portál pro správu pronájmů">
+
+    <h2 class="subsection">Odběratel (zákazník)</h2>
+
+    <label class="fld">Název společnosti</label>
+    <input type="text" id="f_subject" placeholder="např. TUKAN s.r.o.">
+
+    <div class="grid2">
+      <div>
+        <label class="fld">IČO</label>
+        <input type="text" id="f_ico" placeholder="např. 12345678">
+      </div>
+      <div>
+        <label class="fld">DIČ</label>
+        <input type="text" id="f_dic" placeholder="např. CZ12345678">
+      </div>
+    </div>
+
+    <label class="fld">Sídlo</label>
+    <input type="text" id="f_seat" placeholder="např. Náměstí Republiky 1, 110 00 Praha 1">
+
+    <label class="fld">Zastoupený</label>
+    <input type="text" id="f_rep" placeholder="např. Jan Novák, jednatel">
+
+    <div class="grid2">
+      <div>
+        <label class="fld">Místo podpisu</label>
+        <input type="text" id="f_place" placeholder="V Praze">
+      </div>
+      <div>
+        <label class="fld">Datum</label>
+        <input type="date" id="f_date">
+      </div>
+    </div>
+
+    <h2 class="subsection">Předané položky</h2>
+    <div id="checks"></div>
+
+    <h2 class="subsection">Předání projektu</h2>
+    <div class="radio-wrap">
+      <label><input type="radio" name="sat" value="1" id="sat_yes" checked><span>Bez výhrad</span></label>
+      <label><input type="radio" name="sat" value="0" id="sat_no"><span>S výhradami</span></label>
+    </div>
+    <div id="reasonWrap" style="display:none;">
+      <label class="fld">Výhrady</label>
+      <textarea id="f_reason" rows="4" placeholder="Uveďte výhrady k předávanému projektu…"></textarea>
+    </div>
+
+    <h2 class="subsection">Za DigiDay (předvyplněno)</h2>
+    <div class="grid2">
+      <div>
+        <label class="fld">Místo</label>
+        <input type="text" id="f_digiplace" value="V Ostravě">
+      </div>
+      <div>
+        <label class="fld">Podepisuje</label>
+        <input type="text" id="f_digisig" value="Martin Klimánek, jednatel">
+      </div>
+    </div>
+
+    <label class="fld">Číslo smlouvy / referenční č. zakázky</label>
+    <input type="text" id="f_contract" placeholder="např. DD-2025-087 (nepovinné)">
+  </aside>
+
+  <!-- ============ PREVIEW ============ -->
+  <main class="preview-panel">
+    <div class="page" id="page">
+      <header class="header">
+        <img src="digiday_logo.svg" alt="Digiday">
+        <div class="doc-title">
+          <h1>Předávací protokol</h1>
+          <div class="subtitle" id="p_subtitle">k projektu TUKAN</div>
+        </div>
+      </header>
+
+      <div class="parties">
+        <div class="party">
+          <div class="party-title">Zhotovitel</div>
+          <div class="prow"><div class="k">Název</div><div class="v">DigiDay Czech s.r.o.</div></div>
+          <div class="prow"><div class="k">Sídlo</div><div class="v">1. Máje 481/16, Mariánské Hory, 709 00 Ostrava</div></div>
+          <div class="prow"><div class="k">IČO</div><div class="v">06078362</div></div>
+          <div class="prow"><div class="k">DIČ</div><div class="v">CZ06078362</div></div>
+          <div class="prow"><div class="k">Zastoupený</div><div class="v" id="p_digisig_party">Martin Klimánek, jednatel</div></div>
+        </div>
+        <div class="party">
+          <div class="party-title">Odběratel</div>
+          <div class="prow"><div class="k">Název</div><div class="v" id="p_subject">—</div></div>
+          <div class="prow"><div class="k">Sídlo</div><div class="v" id="p_seat">—</div></div>
+          <div class="prow"><div class="k">IČO</div><div class="v" id="p_ico">—</div></div>
+          <div class="prow"><div class="k">DIČ</div><div class="v" id="p_dic">—</div></div>
+          <div class="prow"><div class="k">Zastoupený</div><div class="v" id="p_rep">—</div></div>
+        </div>
+      </div>
+
+      <p class="body" id="p_intro"></p>
+
+      <h2 class="section">Předané <span class="accent">položky</span></h2>
+      <div id="p_items"></div>
+
+      <div class="satisfaction">
+        Projekt byl předán a převzat
+        <span class="opt" id="p_sat_yes">BEZ VÝHRAD</span> /
+        <span class="opt" id="p_sat_no">S VÝHRADAMI</span>.
+        <div class="reason" id="p_reason"></div>
+      </div>
+
+      <p class="legal" id="p_legal_contract"></p>
+      <p class="legal">Tento předávací protokol potvrzuje splnění předmětu díla dle uzavřené smlouvy a zakládá povinnost uhradit případné zbývající platby dle smluvních podmínek.</p>
+
+      <div class="signatures">
+        <div class="sig">
+          <div class="sig-place"><span id="p_digiplace">V Ostravě</span> dne: <span id="p_date_l">—</span></div>
+          <div class="sig-for">Za DigiDay Czech s.r.o.</div>
+          <div class="sig-line" id="p_digisig">Martin Klimánek, jednatel</div>
+        </div>
+        <div class="sig">
+          <div class="sig-place"><span id="p_place">—</span> dne: <span id="p_date_r">—</span></div>
+          <div class="sig-for">Za odběratele</div>
+          <div class="sig-line" id="p_rep2">—</div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <span>DigiDay Czech s.r.o. &nbsp;·&nbsp; IČO 06078362 &nbsp;·&nbsp; <a href="https://digiday.cz">digiday.cz</a></span>
+        <span id="p_footer_project">Předávací protokol · TUKAN</span>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script>
+const ITEMS = [
+  { id:'access',      label:'Přístupové údaje do administrace / systému',              yes:'předáno', no:'nepředáno' },
+  { id:'training',    label:'Školení obsluhy a předávací meeting',                      yes:'provedeno', no:'neprovedeno' },
+  { id:'docs',        label:'Technická dokumentace k projektu',                         yes:'předána', no:'nepředána' },
+  { id:'hosting',     label:'Přístupy k hostingu, doméně a navazujícím službám',        yes:'předány', no:'nepředány' },
+  { id:'repo',        label:'Přístup ke zdrojovému kódu / repozitáři',                 yes:'předán', no:'nepředán' },
+  { id:'production',  label:'Nasazení a ověření funkčnosti na produkčním prostředí',    yes:'ověřeno', no:'neověřeno' },
+];
+
+const state = {
+  project:'TUKAN', projectdesc:'',
+  subject:'', ico:'', dic:'', seat:'', rep:'', place:'', date:'',
+  digiplace:'V Ostravě', digisig:'Martin Klimánek, jednatel',
+  contract:'',
+  noReservations:true, reservations:'',
+  items: ITEMS.map(() => true)
+};
+
+const checksEl = document.getElementById('checks');
+ITEMS.forEach((it, idx) => {
+  const row = document.createElement('label');
+  row.className = 'check-row';
+  row.innerHTML = `
+    <input type="checkbox" data-idx="${idx}" checked>
+    <span class="cr-text">${idx+1}. ${escapeHtml(it.label)}
+      <small>zaškrtnuto = „${escapeHtml(it.yes)}" &nbsp;·&nbsp; nezaškrtnuto = „${escapeHtml(it.no)}"</small>
+    </span>`;
+  checksEl.appendChild(row);
+});
+
+checksEl.addEventListener('change', e => {
+  if (e.target.dataset.idx !== undefined) {
+    state.items[+e.target.dataset.idx] = e.target.checked;
+    render();
+  }
+});
+
+const fieldMap = {
+  f_project:'project', f_projectdesc:'projectdesc',
+  f_subject:'subject', f_ico:'ico', f_dic:'dic',
+  f_seat:'seat', f_rep:'rep', f_place:'place',
+  f_date:'date', f_digiplace:'digiplace', f_digisig:'digisig',
+  f_contract:'contract', f_reason:'reservations'
+};
+Object.keys(fieldMap).forEach(id => {
+  document.getElementById(id).addEventListener('input', e => {
+    state[fieldMap[id]] = e.target.value;
+    render();
+  });
+});
+
+document.getElementById('sat_yes').addEventListener('change', () => { state.noReservations = true;  toggleReason(); render(); });
+document.getElementById('sat_no').addEventListener('change',  () => { state.noReservations = false; toggleReason(); render(); });
+function toggleReason() {
+  document.getElementById('reasonWrap').style.display = state.noReservations ? 'none' : 'block';
+}
+
+const today = new Date().toISOString().slice(0,10);
+state.date = today;
+document.getElementById('f_date').value = today;
+
+function render() {
+  const proj = state.project || 'projekt';
+  const projDesc = state.projectdesc;
+
+  document.getElementById('p_subtitle').textContent = 'k projektu ' + proj;
+  document.getElementById('p_footer_project').textContent = 'Předávací protokol · ' + proj;
+
+  document.getElementById('p_subject').textContent = state.subject || '—';
+  document.getElementById('p_seat').textContent    = state.seat || '—';
+  document.getElementById('p_ico').textContent     = state.ico || '—';
+  document.getElementById('p_dic').textContent     = state.dic || '—';
+  document.getElementById('p_rep').textContent     = state.rep || '—';
+  document.getElementById('p_rep2').textContent    = state.rep || '—';
+  document.getElementById('p_place').textContent   = state.place || '—';
+  document.getElementById('p_digiplace').textContent = state.digiplace || '—';
+  document.getElementById('p_digisig').textContent   = state.digisig || '—';
+  document.getElementById('p_digisig_party').textContent = state.digisig || '—';
+
+  const subj = state.subject || '[odběratel]';
+  const descPart = projDesc ? ` (${escapeHtml(projDesc)})` : '';
+  document.getElementById('p_intro').innerHTML =
+    `<strong>${escapeHtml(subj)}</strong> tímto potvrzuje, že převzal/a od společnosti ` +
+    `<strong>DigiDay Czech s.r.o.</strong>, se sídlem 1. Máje 481/16, Mariánské Hory, 709 00 Ostrava, ` +
+    `IČO: 06078362, DIČ: CZ06078362, zhotovený projekt <strong>${escapeHtml(proj)}${descPart}</strong>.`;
+
+  const contractEl = document.getElementById('p_legal_contract');
+  if (state.contract) {
+    contractEl.textContent = `Referenční číslo zakázky / smlouvy: ${state.contract}.`;
+    contractEl.style.display = 'block';
+  } else {
+    contractEl.style.display = 'none';
+  }
+
+  const dateFmt = state.date ? formatDateCs(state.date) : '—';
+  document.getElementById('p_date_l').textContent = dateFmt;
+  document.getElementById('p_date_r').textContent = dateFmt;
+
+  document.getElementById('p_items').innerHTML = state.items.map((on, idx) => {
+    const it = ITEMS[idx];
+    return `
+      <div class="item ${on ? '' : 'no'}">
+        <div class="it-label"><span class="it-num">${idx+1}.</span>${escapeHtml(it.label)}</div>
+        <span class="badge ${on ? '' : 'no'}">${escapeHtml(on ? it.yes : it.no)}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('p_sat_yes').classList.toggle('active', state.noReservations);
+  document.getElementById('p_sat_no').classList.toggle('active', !state.noReservations);
+  document.getElementById('p_reason').textContent =
+    (!state.noReservations && state.reservations) ? 'Uvedené výhrady: ' + state.reservations : '';
+}
+
+function formatDateCs(iso) {
+  const [y,m,d] = iso.split('-');
+  return `${+d}. ${+m}. ${y}`;
+}
+function escapeHtml(s='') {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+document.getElementById('btnSave').addEventListener('click', () => {
+  localStorage.setItem('digiday_predavaci_b2b', JSON.stringify(state));
+  alert('Uloženo do prohlížeče.');
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  if (!confirm('Vyčistit formulář?')) return;
+  localStorage.removeItem('digiday_predavaci_b2b');
+  location.reload();
+});
+
+const saved = localStorage.getItem('digiday_predavaci_b2b');
+if (saved) {
+  try {
+    const p = JSON.parse(saved);
+    Object.assign(state, p);
+    if (!Array.isArray(state.items) || state.items.length !== ITEMS.length)
+      state.items = ITEMS.map(() => true);
+    Object.keys(fieldMap).forEach(id => { document.getElementById(id).value = state[fieldMap[id]] || ''; });
+    document.getElementById('f_date').value = state.date || today;
+    document.getElementById('sat_yes').checked = state.noReservations;
+    document.getElementById('sat_no').checked = !state.noReservations;
+    state.items.forEach((on,i) => { checksEl.children[i].querySelector('input').checked = on; });
+  } catch(e) { console.warn(e); }
+}
+
+toggleReason();
+render();
+</script>
+</body>
+</html>
