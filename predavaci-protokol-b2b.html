@@ -355,7 +355,7 @@
     <label class="fld">Přihlašovací jméno</label>
     <input type="text" id="f_access_login" placeholder="např. admin">
     <label class="fld">Heslo</label>
-    <input type="text" id="f_access_pass" placeholder="např. H3sl0!">
+    <input type="password" id="f_access_pass" placeholder="např. H3sl0!" autocomplete="off">
 
     <h2 class="subsection">Předání projektu</h2>
     <div class="radio-wrap">
@@ -587,8 +587,12 @@ function escapeHtml(s='') {
 
 document.getElementById('btnPrint').addEventListener('click', () => window.print());
 document.getElementById('btnSave').addEventListener('click', () => {
-  localStorage.setItem('digiday_predavaci_b2b_v2', JSON.stringify(state));
-  alert('Uloženo do prohlížeče.');
+  const toSave = Object.assign({}, state);
+  delete toSave.access_url;
+  delete toSave.access_login;
+  delete toSave.access_pass;
+  localStorage.setItem('digiday_predavaci_b2b_v2', JSON.stringify(toSave));
+  alert('Uloženo do prohlížeče. (Přihlašovací údaje se neukládají.)');
 });
 document.getElementById('btnReset').addEventListener('click', () => {
   if (!confirm('Vyčistit formulář?')) return;
