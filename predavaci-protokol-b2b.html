@@ -240,6 +240,35 @@
   .sig .sig-for { font-size: 9pt; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; margin-bottom: 30px; }
   .sig .sig-line { border-top: 1px solid var(--dark); padding-top: 6px; font-size: 10pt; font-weight: 600; }
 
+  .credentials {
+    margin: 0 0 18px 0;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--pink);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .credentials .cred-title {
+    background: #fff5fa;
+    padding: 7px 14px;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--pink);
+    border-bottom: 1px solid var(--border);
+  }
+  .credentials .cred-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px;
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10pt;
+  }
+  .credentials .cred-row:last-child { border-bottom: none; }
+  .credentials .cred-row .ck { color: var(--muted); font-size: 8.5pt; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; padding-top: 2px; }
+  .credentials .cred-row .cv { font-weight: 600; font-family: "SF Mono", "Fira Mono", "Menlo", monospace; font-size: 10pt; word-break: break-all; }
+
   .footer {
     margin-top: 28px; padding-top: 10px;
     border-top: 1px solid var(--border);
@@ -320,6 +349,14 @@
     <h2 class="subsection">Předané položky</h2>
     <div id="checks"></div>
 
+    <h2 class="subsection">Přihlašovací údaje</h2>
+    <label class="fld">URL administrace</label>
+    <input type="text" id="f_access_url" placeholder="např. https://domena.cz/wp-login.php">
+    <label class="fld">Přihlašovací jméno</label>
+    <input type="text" id="f_access_login" placeholder="např. admin">
+    <label class="fld">Heslo</label>
+    <input type="text" id="f_access_pass" placeholder="např. H3sl0!">
+
     <h2 class="subsection">Předání projektu</h2>
     <div class="radio-wrap">
       <label><input type="radio" name="sat" value="1" id="sat_yes" checked><span>Bez výhrad</span></label>
@@ -380,6 +417,13 @@
       <h2 class="section">Předané <span class="accent">položky</span></h2>
       <div id="p_items"></div>
 
+      <div class="credentials" id="p_credentials" style="display:none">
+        <div class="cred-title">Přihlašovací údaje k administraci</div>
+        <div class="cred-row"><div class="ck">URL</div><div class="cv" id="p_access_url"></div></div>
+        <div class="cred-row"><div class="ck">Uživatel</div><div class="cv" id="p_access_login"></div></div>
+        <div class="cred-row"><div class="ck">Heslo</div><div class="cv" id="p_access_pass"></div></div>
+      </div>
+
       <div class="satisfaction">
         Projekt byl předán a převzat
         <span class="opt" id="p_sat_yes">BEZ VÝHRAD</span> /
@@ -424,6 +468,7 @@ const state = {
   rep:'Michal Ďuračka, ředitel společnosti', place:'V Blansku', date:'',
   digiplace:'V Ostravě', digisig:'Martin Klimánek, jednatel',
   contract:'',
+  access_url:'', access_login:'', access_pass:'',
   noReservations:true, reservations:'',
   items: ITEMS.map(() => true)
 };
@@ -452,7 +497,9 @@ const fieldMap = {
   f_subject:'subject', f_ico:'ico', f_dic:'dic',
   f_seat:'seat', f_rep:'rep', f_place:'place',
   f_date:'date', f_digiplace:'digiplace', f_digisig:'digisig',
-  f_contract:'contract', f_reason:'reservations'
+  f_contract:'contract',
+  f_access_url:'access_url', f_access_login:'access_login', f_access_pass:'access_pass',
+  f_reason:'reservations'
 };
 Object.keys(fieldMap).forEach(id => {
   document.getElementById(id).addEventListener('input', e => {
@@ -495,6 +542,13 @@ function render() {
     `<strong>${escapeHtml(subj)}</strong> tímto potvrzuje, že převzal/a od společnosti ` +
     `<strong>Digiday Creative s.r.o.</strong>, se sídlem 1. Máje 481/16, Mariánské Hory, 709 00 Ostrava, ` +
     `IČO: 06117589, výsledky programátorských prací v rámci projektu <strong>${escapeHtml(proj)}${descPart}</strong>.`;
+
+  const credEl = document.getElementById('p_credentials');
+  const hasAccess = state.access_url || state.access_login || state.access_pass;
+  credEl.style.display = hasAccess ? 'block' : 'none';
+  document.getElementById('p_access_url').textContent   = state.access_url   || '';
+  document.getElementById('p_access_login').textContent = state.access_login || '';
+  document.getElementById('p_access_pass').textContent  = state.access_pass  || '';
 
   const contractEl = document.getElementById('p_legal_contract');
   if (state.contract) {
